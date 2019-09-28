@@ -20,16 +20,32 @@ func createModule(c *Core) *js.Object {
 	return m
 }
 
-func loadModule(c *Core, p string) *js.Program {
+func compileModule(p string) *js.Program {
+	code, _ := ioutil.ReadFile(p)
+	text := moduleTemplate(string(code))
+	prg, _ := js.Compile(p, text, false)
+
+	return prg
+}
+
+func loadModule(c *Core, p string) js.Value {
 	p = filepath.Clean(p)
 	pkg := c.Pkg[p]
-	if pkg == nil {
-		code, _ := ioutil.ReadFile(p)
-		text := moduleTemplate(string(code))
-		pkg, _ = js.Compile(p, text, false)
-		c.Pkg[p] = pkg
+	if pkg != nil {
+		return pkg
 	}
-	return pkg
+
+	prg := compileModule(p)
+
+	r := c.GetRts()
+	f, _ := r.RunProgram(prg)
+	g, _ := js.AssertFunction(f)
+
+	m := createModule(c)
+	jsExports := m.Get("exports")
+	g(jsExports, m, jsExports)
+
+	return m.Get("exports")
 }
 
 // RegisterLoader register a simple commonjs style loader to runtime
@@ -38,15 +54,6 @@ func RegisterLoader(c *Core) {
 
 	r.Set("require", func(call js.FunctionCall) js.Value {
 		p := call.Argument(0).String()
-		prg := loadModule(c, p)
-
-		f, _ := r.RunProgram(prg)
-		g, _ := js.AssertFunction(f)
-
-		m := createModule(c)
-		jsExports := m.Get("exports")
-		g(jsExports, m, jsExports)
-
-		return m.Get("exports")
+		return loadModule(c, p)
 	})
 }

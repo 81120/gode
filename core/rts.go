@@ -7,13 +7,13 @@ import (
 // Core is the basic struct of gode
 type Core struct {
 	Rts *js.Runtime
-	Pkg map[string]*js.Program
+	Pkg map[string]js.Value
 }
 
 // New create a *Core
 func New() *Core {
 	vm := js.New()
-	pkg := make(map[string]*js.Program)
+	pkg := make(map[string]js.Value)
 
 	return &Core{
 		Rts: vm,
