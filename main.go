@@ -1,10 +1,3 @@
-# gode
-
-A test project to implement a Node like javascript environment based on goja
-
-# Example
-
-```golang
 package main
 
 import (
@@ -28,4 +21,3 @@ func main() {
 		fmt.Println(v)
 	}
 }
-```
